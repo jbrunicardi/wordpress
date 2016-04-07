@@ -66,7 +66,7 @@ if [[ "$1" == apache2* ]] || [ "$1" == php-fpm ]; then
 	# version 4.4.1 decided to switch to windows line endings, that breaks our seds and awks
 	# https://github.com/docker-library/wordpress/issues/116
 	# https://github.com/WordPress/WordPress/commit/1acedc542fba2482bab88ec70d4bea4b997a92e4
-	sed -ri 's/\r\n|\r/\n/g' wp-config*
+	for i in wp-config*;do sed -r 's/\r\n|\r/\n/g' $i > /tmp/$i; mv /tmp/$i $i; done
 
 	if [ ! -e wp-config.php ]; then
 		awk '/^\/\*.*stop editing.*\*\/$/ && c == 0 { c = 1; system("cat") } { print }' wp-config-sample.php > wp-config.php <<'EOPHP'
@@ -100,7 +100,8 @@ EOPHP
 			start="^(\s*)$(sed_escape_lhs "$key")\s*="
 			end=";"
 		fi
-		sed -ri "s/($start\s*).*($end)$/\1$(sed_escape_rhs "$(php_escape "$value" "$var_type")")\3/" wp-config.php
+		sed -r "s/($start\s*).*($end)$/\1$(sed_escape_rhs "$(php_escape "$value" "$var_type")")\3/" wp-config.php > /tmp/wp-config.php
+		mv /tmp/wp-config.php wp-config.php
 	}
 
 	set_config 'DB_HOST' "$WORDPRESS_DB_HOST"
